@@ -1,0 +1,68 @@
+services:
+  backend:
+    build:
+      context: ./backend
+    ports:
+      - "8000:8080"
+    volumes:
+      - ./backend:/app
+    working_dir: /app
+    environment:
+      - MODE=API
+
+  db:
+    image: postgres:15
+    container_name: golang_db
+    restart: always
+    environment:
+      POSTGRES_USER: admin
+      POSTGRES_PASSWORD: secret
+      POSTGRES_DB: postgres_db
+    ports:
+      - "5436:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    networks:
+      - golang_net
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $$POSTGRES_USER -d $$POSTGRES_DB"]
+      interval: 5s       # Check every 5 seconds
+      timeout: 5s        # Give the command 5 seconds to respond
+      retries: 5         # Retry 5 times before marking as unhealthy
+      start_period: 10s  # Give the container 10 seconds to start up before checks begin
+  
+  pg_backup:
+    image: postgres:15
+    container_name: pg_backup
+    depends_on:
+      - db
+    entrypoint: ["/bin/sh", "-c"]
+    command:
+      - |
+        mkdir -p /backups &&
+        while true; do
+          pg_dump -h postgres -U admin -F c -d postgres_db > /backups/backup_$(date +%Y%m%d_%H%M%S).dump;
+          sleep 86400;
+        done
+    environment:
+      PGPASSWORD: secret
+    volumes:
+      - ./backups/pg_backups:/backups
+
+  redis:
+    image: redis:7.2-alpine
+    container_name: golang_cache
+    ports:
+      - "6380:6379"
+    volumes:
+      - redis_data:/data
+    networks:
+      - golang_net
+    restart: unless-stopped
+
+networks:
+  golang_net:
+
+volumes:
+  redis_data:
+  pgdata: 
