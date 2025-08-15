@@ -21,9 +21,15 @@ func NewUserApis(mux *chi.Mux, repo *UserRepository) *UserAPIs {
 }
 
 func (ua *UserAPIs) registerUserRoutes(mux *chi.Mux) {
-	mux.Route("/users", func(mux chi.Router) {
-		mux.Get("/", middleware.JSON(ua.getUsers))
-		mux.Post("/", middleware.JSON(ua.createUser))
+	mux.Route("/users", func(r chi.Router) {
+		r.Post("/", middleware.JSON(ua.signup))
+		r.Post("/login", middleware.JSON(ua.login))
+
+		r.Group(func(protected chi.Router) {
+			protected.Use(middleware.JWTAuth)
+			r.Get("/", middleware.JSON(ua.getUsers))
+			r.Get("/", middleware.JSON(ua.getUser))
+		})
 	})
 }
 
@@ -35,6 +41,22 @@ func (ua *UserAPIs) getUsers(w http.ResponseWriter, r *http.Request) (interface{
 		return nil, http.StatusBadRequest
 	}
 	return users, http.StatusOK
+}
+
+func (ua *UserAPIs) getUser(w http.ResponseWriter, r *http.Request) (interface{}, int) {
+	logger.Logger.Infof("Starting to get user")
+	var input GetUserInputDto
+
+	// Decode JSON request into struct
+	if err := json.NewDecoder(r.Body).Decode(&input); err != nil {
+		return map[string]string{"error": "Invalid request body"}, http.StatusBadRequest
+	}
+	user, err := ua.repo.GetUser(input.Id)
+	if err != nil {
+		logger.Logger.Errorf("Ran into an error %v", err)
+		return nil, http.StatusBadRequest
+	}
+	return user, http.StatusOK
 }
 
 func (ua *UserAPIs) login(w http.ResponseWriter, r *http.Request) (interface{}, int) {
@@ -54,7 +76,7 @@ func (ua *UserAPIs) login(w http.ResponseWriter, r *http.Request) (interface{}, 
 	if err != nil {
 		return map[string]string{"error": "Something went wrong"}, http.StatusInternalServerError
 	}
-	if hash != user.Password {
+	if hash != *user.Password {
 		return map[string]string{"error": "Incorrect Password"}, http.StatusBadRequest
 	}
 

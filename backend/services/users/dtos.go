@@ -1,5 +1,9 @@
 package user
 
+type GetUserInputDto struct {
+	Id int64 `json:"id"`
+}
+
 type LoginInputDto struct {
 	Email    string `json:"email"`
 	Password string `json:"password"`
