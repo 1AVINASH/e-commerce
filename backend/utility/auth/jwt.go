@@ -54,8 +54,8 @@ func ValidateJWT(tokenStr string) (*Claims, error) {
 	if err != nil || !token.Valid {
 		return nil, err
 	}
-	username := claims.Username
-	jwtInCache := redisclient.RedisClient.Get(context.Background(), username)
+	email := claims.email
+	jwtInCache := redisclient.RedisClient.Get(context.Background(), email)
 	if jwtInCache==nil {
 		return nil, fmt.Errorf("Please login again")
 	}

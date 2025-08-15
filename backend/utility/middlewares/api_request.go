@@ -23,7 +23,7 @@ func JWTAuth(next http.Handler) http.Handler {
 		}
 
 		// Add username to context
-		ctx := context.WithValue(r.Context(), "email", claims.Email)
+		ctx := context.WithValue(r.Context(), "_user", claims)
 		next.ServeHTTP(w, r.WithContext(ctx))
 	})
 }
