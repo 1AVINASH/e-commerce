@@ -8,6 +8,7 @@ import (
 	redisclient "gotemplate/infra/redis"
 
 	"github.com/golang-jwt/jwt/v5"
+	"golang.org/x/crypto/bcrypt"
 )
 
 var jwtKey = []byte("supersecretkey")
@@ -19,14 +20,14 @@ type Claims struct {
 
 // HashPassword hashes the plain password using bcrypt
 func HashPassword(password string) (string, error) {
-    bytes, err := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
-    return string(bytes), err
+	bytes, err := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
+	return string(bytes), err
 }
 
 // CheckPasswordHash compares hashed password with plain text password
 func CheckPasswordHash(password, hash string) bool {
-    err := bcrypt.CompareHashAndPassword([]byte(hash), []byte(password))
-    return err == nil
+	err := bcrypt.CompareHashAndPassword([]byte(hash), []byte(password))
+	return err == nil
 }
 
 func GenerateJWT(email string) (string, error) {
@@ -54,9 +55,9 @@ func ValidateJWT(tokenStr string) (*Claims, error) {
 	if err != nil || !token.Valid {
 		return nil, err
 	}
-	email := claims.email
+	email := claims.Email
 	jwtInCache := redisclient.RedisClient.Get(context.Background(), email)
-	if jwtInCache==nil {
+	if jwtInCache == nil {
 		return nil, fmt.Errorf("Please login again")
 	}
 	return claims, nil

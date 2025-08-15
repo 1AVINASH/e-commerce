@@ -3,7 +3,8 @@ create table users (
     name text,
     email text,
     password text,
-    session_token text
+    session_token text,
+    role text
 );
 
 create table products (
