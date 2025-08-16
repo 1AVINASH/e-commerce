@@ -16,3 +16,9 @@ create table products (
     thumbnail text,
     photos text
 )
+
+create table product_photos (
+    id bigserial,
+    product_id bigint,
+    path text
+)
