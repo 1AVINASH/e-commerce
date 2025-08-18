@@ -4,6 +4,7 @@ import (
 	"database/sql"
 	"fmt"
 	"gotemplate/infra/postgres"
+	"strings"
 )
 
 type ProductRepository struct{}
@@ -61,23 +62,30 @@ func (r *ProductRepository) CreateProduct(p *Product) (*Product, error) {
 // UpdateProduct updates a product into the DB
 func (r *ProductRepository) UpdateProduct(p *Product) (*Product, error) {
 	setClause := []string{}
+	parameters := []interface{}{}
 	if p.Title!=nil {
 		setClause = append(setClause, fmt.Sprintf("title=$%d", len(setClause)+1))
+		parameters = append(parameters, p.Title)
 	}
 	if p.Description!=nil {
 		setClause = append(setClause, fmt.Sprintf("description=$%d", len(setClause)+1))
+		parameters = append(parameters, p.Description)
 	}
 	if p.OriginalPrice!=nil {
 		setClause = append(setClause, fmt.Sprintf("original_price=$%d", len(setClause)+1))
+		parameters = append(parameters, p.OriginalPrice)
 	}
 	if p.Discount!=nil {
 		setClause = append(setClause, fmt.Sprintf("discount=$%d", len(setClause)+1))
+		parameters = append(parameters, p.Discount)
 	}
 	if p.Thumbnail!=nil {
 		setClause = append(setClause, fmt.Sprintf("thumbnail=$%d", len(setClause)+1))
+		parameters = append(parameters, p.Thumbnail)
 	}
-	query := `UPDATE products set title=$1, description=$2, original_price=$3, discount=$4, thumbnail=$5) VALUES ($1, $2, $3, $4, $5) where id=$1`
-	err := postgres.DB.QueryRow(query, *p.Title, *p.Description, *p.OriginalPrice, *p.Discount, *p.Thumbnail)
+	finalSetClause := strings.Join(setClause, ",")
+	query := fmt.Sprintf(`UPDATE products set %s`, finalSetClause)
+	err := postgres.DB.QueryRow(query, parameters)
 	if err != nil {
 		return nil, fmt.Errorf("CreateProduct: %w", err)
 	}
