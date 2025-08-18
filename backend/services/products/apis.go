@@ -2,7 +2,6 @@ package products
 
 import (
 	"encoding/json"
-	"gotemplate/utility/auth"
 	"gotemplate/utility/logger"
 	middleware "gotemplate/utility/middlewares"
 	"net/http"
@@ -65,11 +64,10 @@ func (pa *ProductAPIs) createProduct(w http.ResponseWriter, r *http.Request) (in
 		return map[string]string{"error": "Invalid request body"}, http.StatusBadRequest
 	}
 	createProductInput := Product{
-		Title: input.Title,
-		Description: input.Description,
+		Title:         input.Title,
+		Description:   input.Description,
 		OriginalPrice: input.OriginalPrice,
-		Discount: input.Discount,
-		Photos: input.Photos,
+		Discount:      input.Discount,
 	}
 	product, err := pa.repo.CreateProduct(&createProductInput)
 	if err != nil {
@@ -92,12 +90,12 @@ func (pa *ProductAPIs) updateProduct(w http.ResponseWriter, r *http.Request) (in
 		return map[string]string{"error": "Invalid request body"}, http.StatusBadRequest
 	}
 	createProductInput := Product{
-		ID: input.ID,
-		Title: input.Title,
-		Description: input.Description,
+		ID:            input.ID,
+		Title:         input.Title,
+		Description:   input.Description,
 		OriginalPrice: input.OriginalPrice,
-		Discount: input.Discount,
-		Thumbnail: input.Thumbnail,
+		Discount:      input.Discount,
+		Thumbnail:     input.Thumbnail,
 	}
 	product, err := pa.repo.CreateProduct(&createProductInput)
 	if err != nil {
