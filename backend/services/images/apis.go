@@ -11,6 +11,7 @@ import (
 
 type ImageAPIs struct {
 	repo *ImageRepository
+	utils *ImageUtils
 }
 
 func NewImageApis(mux *chi.Mux, repo *ImageRepository) *ImageAPIs {
@@ -24,7 +25,8 @@ func (ia *ImageAPIs) registerImageRoutes(mux *chi.Mux) {
 		r.Group(func(protected chi.Router) {
 			protected.Use(middleware.JWTAuth)
 			r.Get("/", middleware.JSON(ia.GetProductPhotos))
-			r.Get("/", middleware.JSON(ia.CreateImage))
+			r.Post("/", middleware.JSON(ia.CreateImage))
+			r.Post("/", middleware.JSON(ia.CreateImage))
 		})
 	})
 }
@@ -64,4 +66,35 @@ func (ia *ImageAPIs) CreateImage(w http.ResponseWriter, r *http.Request) (interf
 	}
 
 	return map[string]interface{}{"status": "created", "image": image}, http.StatusCreated
+}
+
+func (ia *ImageAPIs) UploadImage(w http.ResponseWriter, r *http.Request) (interface{}, int) {
+	logger.Logger.Infof("Upload Image")
+	r.Body = http.MaxBytesReader(w, r.Body, 10<<20) // 10 MB
+
+	err := r.ParseMultipartForm(32 << 20)
+	if err != nil {
+		http.Error(w, "Failed to parse form", http.StatusBadRequest)
+		return nil, http.StatusBadRequest
+	}
+
+	files := r.MultipartForm.File["files"]
+	if len(files) == 0 {
+		http.Error(w, "No files uploaded", http.StatusBadRequest)
+		return nil, http.StatusBadRequest
+	}
+
+	var uploaded []map[string]string
+
+	for _, fileHeader := range files {
+		fileInfo, err := ia.utils.processFile(fileHeader)
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusBadRequest)
+			return nil, http.StatusBadRequest
+		}
+		uploaded = append(uploaded, fileInfo)
+	}
+
+
+	return map[string]interface{}{"status": "created", "image": uploaded}, http.StatusCreated
 }
