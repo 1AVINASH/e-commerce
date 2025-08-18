@@ -3,7 +3,6 @@ package images
 import (
 	"fmt"
 	"mime/multipart"
-	"net/http"
 	"os"
 	"path/filepath"
 	"strings"
